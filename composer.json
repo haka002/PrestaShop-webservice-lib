@@ -1,11 +1,14 @@
 {
-    "name": "prestashop/prestashop-webservice-lib",
-    "description": "PrestaShop Webservice access library",
+    "name": "haka002/prestashop-webservice-lib",
+    "description": "PrestaShop Webservice access library for version 1.7.x too.",
+    "type": "library",
+    "keywords": ["webservice","php", "prestashop", "api", "client"],
+    "homepage": "https://github.com/haka002/PrestaShop-webservice-lib",
     "license": "OSL-3.0",
     "authors": [
         {
-            "name": "PrestaShop SA",
-            "email": "contact@prestashop.com"
+            "name": "Tamas Szabo",
+            "email": "haka002@gmail.com"
         }
     ],
     "autoload": {
