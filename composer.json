@@ -1,6 +1,6 @@
 {
     "name": "haka002/prestashop-webservice-lib",
-    "description": "PrestaShop Webservice access library for version 1.7.x too.",
+    "description": "PrestaShop Webservice access library.",
     "type": "library",
     "keywords": ["webservice","php", "prestashop", "api", "client"],
     "homepage": "https://github.com/haka002/PrestaShop-webservice-lib",
@@ -12,7 +12,9 @@
         }
     ],
     "autoload": {
-        "classmap": ["PSWebServiceLibrary.php"]
+      "PSR-4": {
+        "PrestaShopWebservice\\": "src/"
+      }
     },
     "require": {
         "php": ">= 5.3.0",
