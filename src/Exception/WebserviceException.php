@@ -7,4 +7,4 @@ use Exception;
 /**
  * @package PrestaShopWebservice
  */
-class WebserviceException extends Exception { }
+class WebserviceException extends Exception {}
