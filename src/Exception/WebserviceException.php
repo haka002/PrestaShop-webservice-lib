@@ -1,6 +1,6 @@
 <?php
 
-namespace PrestaShopWebService\Exception;
+namespace PrestaShopWebservice\Exception;
 
 use Exception;
 
