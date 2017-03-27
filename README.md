@@ -17,10 +17,10 @@ require_once('./PSWebServiceLibrary.php');
 try
 {
 	$webService = new PrestaShopWebservice(PS_SHOP_PATH, PS_WS_AUTH_KEY, DEBUG);
-	
+
 	// Here we set the option array for the Webservice : we want customers resources
 	$opt['resource'] = 'customers';
-	
+
 	// Call
 	$xml = $webService->get($opt);
 	// Here we get the elements from children of customers markup "customer"
