@@ -1,6 +1,8 @@
 <?php
 
-use PrestaShopWebService\Exception\WebserviceException;
+namespace PrestaShopWebservice;
+
+use PrestaShopWebservice\Exception\WebserviceException;
 
 class Webservice
 {
@@ -143,8 +145,8 @@ class Webservice
 		{
 			$this->version = $headerArray['PSWS-Version'];
 			if (
-				version_compare(PrestaShopWebservice::PS_COMPATIBLE_VERSIONS_MIN, $headerArray['PSWS-Version']) == 1 ||
-				version_compare(PrestaShopWebservice::PS_COMPATIBLE_VERSIONS_MAX, $headerArray['PSWS-Version']) == -1
+				version_compare(static::PS_COMPATIBLE_VERSIONS_MIN, $headerArray['PSWS-Version']) == 1 ||
+				version_compare(static::PS_COMPATIBLE_VERSIONS_MAX, $headerArray['PSWS-Version']) == -1
 			)
 			throw new WebserviceException('This library is not compatible with this version of PrestaShop. Please upgrade/downgrade this library');
 		}
@@ -186,21 +188,16 @@ class Webservice
 	 */
 	protected function parseXML($response)
 	{
-		if ($response != '')
+		libxml_clear_errors();
+		libxml_use_internal_errors(true);
+		$xml = simplexml_load_string($response,'SimpleXMLElement', LIBXML_NOCDATA);
+		if (libxml_get_errors())
 		{
+			$msg = var_export(libxml_get_errors(), true);
 			libxml_clear_errors();
-			libxml_use_internal_errors(true);
-			$xml = simplexml_load_string($response,'SimpleXMLElement', LIBXML_NOCDATA);
-			if (libxml_get_errors())
-			{
-				$msg = var_export(libxml_get_errors(), true);
-				libxml_clear_errors();
-				throw new WebserviceException('HTTP XML response is not parsable: '.$msg);
-			}
-			return $xml;
+			throw new WebserviceException('HTTP XML response is not parsable: '.$msg);
 		}
-		else
-			throw new WebserviceException('HTTP response is empty');
+		return $xml;
 	}
 
 	/**
@@ -214,7 +211,10 @@ class Webservice
 	 */
 	public function add($options)
 	{
-		$xml = '';
+		if (!isset($options[static::OPTION_OUTPUT_FORMAT]))
+		{
+			$options[static::OPTION_OUTPUT_FORMAT] = static::OPTION_VALUE_OUTPUT_FORMAT_JSON;
+		}
 
 		if (isset($options['resource'], $options['postXml']) || isset($options['url'], $options['postXml']))
 		{
@@ -230,7 +230,8 @@ class Webservice
 		$request = self::executeRequest($url, array(CURLOPT_CUSTOMREQUEST => 'POST', CURLOPT_POSTFIELDS => $xml));
 
 		self::checkStatusCode($request['status_code']);
-		return self::parseXML($request['response']);
+
+		return $this->parseResponse($request['response'], $options[static::OPTION_OUTPUT_FORMAT]);
 	}
 
 	/**
@@ -263,6 +264,11 @@ class Webservice
 	 */
 	public function get($options)
 	{
+		if (!isset($options[static::OPTION_OUTPUT_FORMAT]))
+		{
+			$options[static::OPTION_OUTPUT_FORMAT] = static::OPTION_VALUE_OUTPUT_FORMAT_JSON;
+		}
+
 		if (isset($options[static::OPTION_URL]))
 		{
 			$url = $options[static::OPTION_URL];
@@ -270,8 +276,7 @@ class Webservice
 		elseif (isset($options[static::OPTION_RESOURCE]))
 		{
 			$url        = $this->url.'/api/'.$options[static::OPTION_RESOURCE];
-			// Add default json response format.
-			$url_params = array(static::OPTION_OUTPUT_FORMAT => static::OPTION_VALUE_OUTPUT_FORMAT_JSON);
+			$url_params = array();
 
 			if (isset($options[static::OPTION_ID]))
 			{
@@ -304,7 +309,7 @@ class Webservice
 
 		self::checkStatusCode($request['status_code']);// check the response validity
 
-		return self::parseXML($request['response']);
+		return $this->parseResponse($request['response'], $options[static::OPTION_OUTPUT_FORMAT]);
 	}
 
 	/**
@@ -315,6 +320,11 @@ class Webservice
 	 */
 	public function head($options)
 	{
+		if (!isset($options[static::OPTION_OUTPUT_FORMAT]))
+		{
+			$options[static::OPTION_OUTPUT_FORMAT] = static::OPTION_VALUE_OUTPUT_FORMAT_JSON;
+		}
+
 		if (isset($options['url']))
 			$url = $options['url'];
 		elseif (isset($options['resource']))
@@ -349,6 +359,11 @@ class Webservice
 	 */
 	public function edit($options)
 	{
+		if (!isset($options[static::OPTION_OUTPUT_FORMAT]))
+		{
+			$options[static::OPTION_OUTPUT_FORMAT] = static::OPTION_VALUE_OUTPUT_FORMAT_JSON;
+		}
+
 		$xml = '';
 		if (isset($options['url']))
 			$url = $options['url'];
@@ -366,7 +381,7 @@ class Webservice
 
 		$request = self::executeRequest($url,  array(CURLOPT_CUSTOMREQUEST => 'PUT', CURLOPT_POSTFIELDS => $xml));
 		self::checkStatusCode($request['status_code']);// check the response validity
-		return self::parseXML($request['response']);
+		return $this->parseResponse($request['response'], $options[static::OPTION_OUTPUT_FORMAT]);
 	}
 
 	/**
@@ -408,5 +423,32 @@ class Webservice
 		$request = self::executeRequest($url, array(CURLOPT_CUSTOMREQUEST => 'DELETE'));
 		self::checkStatusCode($request['status_code']);// check the response validity
 		return true;
+	}
+
+	/**
+	 * @param string $response
+	 *
+	 * @throws WebserviceException
+	 *
+	 * @return string
+	 */
+	protected function parseResponse($response, $format)
+	{
+		if ($response != '')
+		{
+			if ($format == static::OPTION_VALUE_OUTPUT_FORMAT_JSON)
+			{
+				return $response;
+			}
+			// XML
+			else
+			{
+				return $this->parseXML($response);
+			}
+		}
+		else
+		{
+			throw new WebserviceException('HTTP response is empty');
+		}
 	}
 }
