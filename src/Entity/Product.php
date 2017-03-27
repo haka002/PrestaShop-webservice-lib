@@ -9,7 +9,7 @@ class Product
 	/**
 	 * @var array
 	 */
-	private $attributes;
+	protected $attributes;
 
 	/**
 	 * @param array $attributes
